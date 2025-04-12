@@ -21,15 +21,29 @@ exports.register = async (req, res) => {
 // Connexion
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const Utilisateur = await Utilisateur.findOne({ email });
-        if (!Utilisateur) return res.status(400).json({ error: 'Utilisateur introuvable' });
-        const isPasswordValid = await bcrypt.compare(password, Utilisateur.password);
+        const { email, mdp } = req.body;
+
+        const User = await Utilisateur.findOne({ email });
+        if (!User) return res.status(400).json({ error: 'Utilisateur introuvable' });
+        console.log("User from DB:", User);
+        console.log("Password from DB:", User.password);
+        console.log("Password from req.body (mdp):", mdp);
+        const isPasswordValid = await bcrypt.compare(mdp, User.password);
         if (!isPasswordValid) return res.status(400).json({ error: 'Mot de passe incorrect' });
-        const token = jwt.sign({ UtilisateurId: Utilisateur._id }, JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token, Utilisateur: { _id: Utilisateur._id, utilisateur: Utilisateur.username, email:
-        Utilisateur.email } });
+
+        const token = jwt.sign({ UtilisateurId: User._id }, JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({
+            token,
+            utilisateur: {
+                _id: User._id,
+                username: User.username,
+                email: User.email
+            }
+        });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 };
+
